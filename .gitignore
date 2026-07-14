@@ -1,0 +1,16 @@
+node_modules
+.next
+out
+coverage
+.env
+.env.local
+.env.*.local
+.DS_Store
+*.log
+__pycache__
+.venv
+backend/.venv
+*.sqlite3
+*.db
+*.tsbuildinfo
+tsc_output.txt
