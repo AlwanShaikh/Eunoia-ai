@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { createContext, useContext, useEffect, useState } from 'react';
+import { apiUrl } from '@/lib/api';
 
 // Helper functions for cookie management
 const setCookie = (name: string, value: string, days = 7) => {
@@ -65,8 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Call backend logout endpoint if token exists
       if (token) {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        await fetch(`${apiUrl}/auth/logout?token=${encodeURIComponent(token)}`, {
+        await fetch(`${apiUrl('/auth/logout')}?token=${encodeURIComponent(token)}`, {
           method: 'POST',
         }).catch(() => {
           // Ignore errors - we'll still clear local state

@@ -25,18 +25,22 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Eunoia API", version="0.1.0")
 
 # ── CORS ─────────────────────────────────────────────────────────────────────
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
-from fastapi.middleware.cors import CORSMiddleware
+# In production, ALLOWED_ORIGINS must include the Vercel frontend domain.
+# Multiple origins can be comma-separated.
+# Example:
+#   ALLOWED_ORIGINS=https://eunoia-9o34gxdhp-alwan-shaikh.vercel.app,http://localhost:3000
+allowed_origins_str = os.getenv(
+    "ALLOWED_ORIGINS",
+    "https://eunoia-9o34gxdhp-alwan-shaikh.vercel.app,http://localhost:3000"
+)
+allowed_origins = [o.strip() for o in allowed_origins_str.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://eunoia-9o34gxdhp-alwan-shaikh.vercel.app",
-        "http://localhost:3000",
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Requested-With", "Accept"],
 )
 # ── Routers ──────────────────────────────────────────────────────────────────
 from app.api.chat import router as chat_router
