@@ -12,11 +12,9 @@ app = FastAPI(
 
 
 allowed_origins = [
-    "https://eunoia-9o34gxdhp-alwan-shaikh.vercel.app",
+    "https://eunoia-pkyn53hkm-alwan-shaikh.vercel.app",
     "http://localhost:3000",
-    "http://localhost:8000",
 ]
-
 
 env_origins = os.getenv("ALLOWED_ORIGINS")
 
