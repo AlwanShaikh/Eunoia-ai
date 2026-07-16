@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
-from app.api.v1.router import api_router
+from app.api.v1.router import router
 from app.database import engine, Base
 
 
@@ -68,4 +68,4 @@ def health():
     }
 
 
-app.include_router(api_router)
+app.include_router(router)
