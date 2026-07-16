@@ -5,6 +5,7 @@ import { ProfileProvider } from '@/components/layout/profile-provider';
 import { AuroraBackground } from '@/components/ui/aurora-background';
 import { PageTransition } from '@/components/ui/page-transition';
 import { NeuralBackground } from '@/components/ui/neural-background';
+import { AuthProvider } from '@/lib/auth';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,12 +18,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuroraBackground>
-          <NeuralBackground enableNeuralBackground={true} />
-          <ProfileProvider>
-            <PageTransition>{children}</PageTransition>
-          </ProfileProvider>
-        </AuroraBackground>
+        <AuthProvider>
+          <AuroraBackground>
+            <NeuralBackground enableNeuralBackground={true} />
+            <ProfileProvider>
+              <PageTransition>{children}</PageTransition>
+            </ProfileProvider>
+          </AuroraBackground>
+        </AuthProvider>
       </body>
     </html>
   );

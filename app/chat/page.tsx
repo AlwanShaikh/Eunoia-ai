@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { SendHorizonal, Sparkles, Clock3, Brain } from 'lucide-react';
 import { Sidebar } from '@/components/layout/sidebar';
@@ -11,9 +12,9 @@ import { TypingIndicator } from '@/components/chat/typing-indicator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AiVoiceButton, AiStatusIndicator } from '@/components/ui/ai-voice-button';
-import { AiCore } from '@/components/ui/ai-core';
-import { VoiceWaveform } from '@/components/ui/voice-waveform';
 import { MemoryPanel } from '@/components/ui/memory-panel';
+import { useVoiceChat } from '@/hooks/useVoiceChat';
+import { useAuth } from '@/lib/auth';
 
 type AiState = 'idle' | 'listening' | 'thinking' | 'responding';
 
@@ -36,14 +37,47 @@ export default function ChatPage() {
   const [showMemory, setShowMemory] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Voice chat hook
+  const { user, token, isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
+  const { isListening, error: voiceError, isSupported: voiceSupported, toggleListening, speak } = useVoiceChat({
+    onTranscript: async (transcript) => {
+      console.log('🎤 Voice transcript received:', transcript);
+      // Set the transcript as input and send it
+      setInput(transcript);
+      // Automatically send the message
+      await handleSend(transcript);
+    },
+    onError: (error) => {
+      console.error('🎤 Voice error:', error);
+      // Could show a toast notification here
+    },
+    language: 'en-US',
+  });
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [history, isTyping]);
 
-  const handleSend = async () => {
-    const trimmed = input.trim();
+  // Redirect to login if not authenticated (token missing) once loading completes
+  useEffect(() => {
+    if (!isLoading && !token) {
+      router.push('/login');
+    }
+  }, [isLoading, token, router]);
+
+  const handleSend = async (message?: string) => {
+    const trimmed = (message || input).trim();
     if (!trimmed || isTyping) return;
+
+    // Require a valid JWT token; redirect to login if missing instead of
+    // sending an unauthenticated request that the backend will reject.
+    if (!token) {
+      router.push('/login');
+      return;
+    }
 
     const now = new Date();
     const timestamp = now.toLocaleTimeString('en-US', {
@@ -56,15 +90,26 @@ export default function ChatPage() {
       ...prev,
       { role: 'user', content: trimmed, timestamp },
     ]);
-    setInput('');
+    if (!message) {
+      setInput('');
+    }
     setIsTyping(true);
     setAiState('listening');
     setShowMemory(false);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const res = await fetch(`${apiUrl}/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ message: trimmed }),
       });
 
@@ -80,16 +125,24 @@ export default function ChatPage() {
         hour12: true,
       });
 
+      const responseContent = data.response ?? data.message ?? data.content ?? JSON.stringify(data);
+      
       setHistory((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: data.response ?? data.message ?? data.content ?? JSON.stringify(data),
+          content: responseContent,
           timestamp: responseTimestamp,
         },
       ]);
 
       setAiState('responding');
+      
+      // Text-to-speech for AI response
+      if (isListening) {
+        speak(responseContent);
+      }
+      
       setTimeout(() => setAiState('idle'), 1500);
     } catch {
       const errorTime = new Date();
@@ -118,6 +171,10 @@ export default function ChatPage() {
     if (e.key === 'Enter') {
       handleSend();
     }
+  };
+
+  const handleButtonClick = () => {
+    handleSend();
   };
 
   return (
@@ -183,16 +240,13 @@ export default function ChatPage() {
 
               {/* Premium input area with voice button */}
               <div className="border-t border-white/10 bg-[#09090B]/40 px-4 py-4 sm:px-6">
-                {/* AI Core visualization + Waveform */}
-                <div className="flex items-center justify-center gap-6 py-3">
-                  <AiCore state={aiState} />
-                  <VoiceWaveform
-                    state={aiState === 'listening' ? 'listening' : aiState === 'thinking' ? 'processing' : 'idle'}
-                  />
-                </div>
-
                 <div className="flex items-end gap-3 rounded-[22px] border border-white/10 bg-white/5 p-2">
-                  <AiVoiceButton size="sm" isActive={isTyping} className="flex-shrink-0" />
+                  <AiVoiceButton 
+                    size="sm" 
+                    isActive={isListening} 
+                    onToggle={toggleListening}
+                    className="flex-shrink-0" 
+                  />
                   <Input
                     placeholder="Share what&rsquo;s on your mind..."
                     className="h-12 border-0 bg-transparent px-0 text-base focus:bg-transparent"
@@ -202,7 +256,7 @@ export default function ChatPage() {
                   />
                   <Button
                     className="h-12 rounded-full px-5 crimson-glow-subtle"
-                    onClick={handleSend}
+                    onClick={handleButtonClick}
                   >
                     <SendHorizonal className="mr-2 h-4 w-4" />
                     Send

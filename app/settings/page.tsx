@@ -3,12 +3,13 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { BellRing, Lock, MoonStar, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
+import { BellRing, Lock, LogOut, MoonStar, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
 import { useProfile } from '@/components/layout/profile-provider';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Navbar } from '@/components/layout/navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/auth';
 
 const settingsSections = [
   { title: 'Theme', icon: MoonStar, description: 'Aurora night, soft contrast, and premium focus.', route: '/settings/theme' },
@@ -45,6 +46,7 @@ function getAvatarColor(name: string): string {
 export default function SettingsPage() {
   const router = useRouter();
   const { profile } = useProfile();
+  const { user, logout } = useAuth();
 
   return (
     <div className="min-h-screen bg-[#09090B] text-zinc-100">
@@ -128,6 +130,28 @@ export default function SettingsPage() {
                   <Lock className="mr-2 h-4 w-4" />
                   Review safety settings
                 </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Account</CardTitle>
+              </CardHeader>
+              <CardContent className="rounded-[22px] border border-white/10 bg-white/[0.04] p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-medium text-white">Sign out of your account</p>
+                    <p className="mt-1 text-sm leading-6 text-zinc-400">You can always sign back in anytime.</p>
+                  </div>
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => logout()}
+                    className="w-full sm:w-auto"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

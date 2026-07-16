@@ -10,6 +10,7 @@ const buttonVariants = cva(
         default: 'bg-gradient-to-r from-[#6D5EF9] to-[#8B5CF6] text-white shadow-[0_18px_45px_rgba(109,94,249,0.35)] hover:translate-y-[-1px] hover:shadow-[0_20px_55px_rgba(109,94,249,0.45)]',
         secondary: 'border border-white/10 bg-white/8 text-zinc-100 hover:bg-white/15',
         ghost: 'bg-transparent text-zinc-300 hover:bg-white/10 hover:text-white',
+        destructive: 'bg-red-500/10 text-red-300 border border-red-400/20 hover:bg-red-500/20 hover:text-red-200',
       },
       size: {
         default: 'h-11 px-5 py-2',

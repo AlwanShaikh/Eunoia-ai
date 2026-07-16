@@ -1,12 +1,14 @@
 import logging
-
-from fastapi import APIRouter, HTTPException, status, Depends
+from typing import Optional
+from fastapi import APIRouter, HTTPException, status, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.gemini_service import GeminiService
 from app.core.database import get_db
 from app.models.chat import ChatMessage
+from app.models.user import User
+from app.core.security import get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +29,7 @@ def get_gemini_service() -> GeminiService:
 @router.post("/chat", response_model=ChatResponse)
 def chat_endpoint(
     request: ChatRequest,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> ChatResponse:
 
@@ -39,8 +42,10 @@ def chat_endpoint(
         )
 
     try:
-        user_id = "haze"
-        session_id = "main_chat"
+        # Get authenticated user
+        user = current_user
+        user_id = str(user.id)
+        session_id = f"user_{user.id}_main"
 
         # Load previous memory
         history_messages = (

@@ -37,8 +37,14 @@ app.add_middleware(
 
 # ── Routers ──────────────────────────────────────────────────────────────────
 from app.api.chat import router as chat_router
+from app.api.auth import router as auth_router
+from app.api.memory import router as memory_router
+from app.api.mood import router as mood_router
 
 app.include_router(chat_router)  # POST /chat
+app.include_router(auth_router)  # POST /signup, /login, /logout, GET /me
+app.include_router(memory_router)  # GET/POST/PUT/DELETE /memories
+app.include_router(mood_router)  # POST /mood, GET /mood/history, /mood/stats, /mood/trends
 
 # ── Health ───────────────────────────────────────────────────────────────────
 @app.get("/health")
